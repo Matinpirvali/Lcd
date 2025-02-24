@@ -53,7 +53,7 @@ def init_display():
     except Exception as e:
         print(f"خطا در init_display: {e}")
 
-def display_image(image_path="image.png"):
+def display_image(image_path="IMG_20250224_113036.jpg"):
     try:
         # باز کردن و پردازش تصویر
         img = Image.open(image_path).convert("RGB")  # تبدیل به فرمت RGB
