@@ -1,31 +1,61 @@
-import Adafruit_ILI9341 as TFT
 from gpiozero import DigitalOutputDevice
 import spidev
-from PIL import Image, ImageDraw
+import time
 
-# تنظیمات پین‌ها
-DC_PIN = 24  # GPIO 24
-RST_PIN = 25  # GPIO 25
-SPI_PORT = 0
-SPI_DEVICE = 0  # برای spidev0.0، اگه spidev0.1 بود به 1 تغییر بده
+# تنظیم پایه‌ها
+CS = DigitalOutputDevice(8)   # Chip Select (GPIO8)
+DC = DigitalOutputDevice(24)  # Data/Command (GPIO24)
+RST = DigitalOutputDevice(25) # Reset (GPIO25)
 
-# راه‌اندازی پین‌ها با gpiozero
-dc = DigitalOutputDevice(DC_PIN)
-rst = DigitalOutputDevice(RST_PIN)
+# مقداردهی اولیه SPI
+spi = spidev.SpiDev(0, 0)
+spi.max_speed_hz = 40000000  
 
-# راه‌اندازی SPI
-spi = spidev.SpiDev()
-spi.open(SPI_PORT, SPI_DEVICE)
-spi.max_speed_hz = 64000000
+# دستورات ILI9341
+ILI9341_SWRESET = 0x01
+ILI9341_SLPOUT  = 0x11
+ILI9341_DISPON  = 0x29
+ILI9341_CASET   = 0x2A
+ILI9341_PASET   = 0x2B
+ILI9341_RAMWR   = 0x2C
 
-# راه‌اندازی LCD
-disp = TFT.ILI9341(dc=dc, rst=rst, spi=spi)
-disp.begin()
+def send_command(cmd):
+    DC.off()  
+    CS.off()
+    spi.writebytes([cmd])
+    CS.on()
 
-# ایجاد تصویر تست
-image = Image.new("RGB", (320, 240), "black")
-draw = ImageDraw.Draw(image)
-draw.text((30, 40), "GPIOZero Test", fill="white")
-disp.display(image)
+def send_data(data):
+    DC.on()  
+    CS.off()
+    spi.writebytes([data] if isinstance(data, int) else data)
+    CS.on()
 
-print("نمایش روی LCD انجام شد!")
+def init_display():
+    RST.off()
+    time.sleep(0.1)
+    RST.on()
+    time.sleep(0.1)
+
+    send_command(ILI9341_SWRESET)
+    time.sleep(0.1)
+    send_command(ILI9341_SLPOUT)
+    time.sleep(0.1)
+    send_command(ILI9341_DISPON)
+
+def clear_screen():
+    send_command(ILI9341_CASET)
+    send_data([0x00, 0x00, 0x00, 0xEF]) # تنظیم محدوده X
+
+    send_command(ILI9341_PASET)
+    send_data([0x00, 0x00, 0x01, 0x3F]) # تنظیم محدوده Y
+
+    send_command(ILI9341_RAMWR)
+    
+    black_color = [0x00, 0x00] * (240 * 320)  # مقداردهی به رنگ مشکی
+    send_data(black_color)
+
+# اجرای برنامه
+init_display()
+clear_screen()
+print("صفحه نمایش سیاه شد!")
