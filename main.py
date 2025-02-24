@@ -3,7 +3,7 @@ import spidev
 import time
 
 # تنظیم پایه‌ها
-CS = DigitalOutputDevice(17)    # Chip Select (GPIO17، به‌جای GPIO8)
+CS = DigitalOutputDevice(22)    # Chip Select (GPIO17، به‌جای GPIO8)
 DC = DigitalOutputDevice(17)    # Data/Command (GPIO17، پین عمومی آزاد)
 RST = DigitalOutputDevice(27)   # Reset (GPIO27، پین عمومی آزاد)
 
@@ -89,10 +89,10 @@ def display_image():
         print(f"خطا در display_image: {e}")
 
 # اجرای برنامه
-if name == "__main__":
     try:
         init_display()
         display_image()
         print("تصویر روی صفحه نمایش نشان داده شد!")
     except Exception as e:
         print(f"خطا در اجرای برنامه: {e}")
+while:
