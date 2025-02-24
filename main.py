@@ -1,11 +1,12 @@
 from gpiozero import DigitalOutputDevice
 import spidev
 import time
+from PIL import Image
 
 # تنظیم پایه‌ها
-CS = DigitalOutputDevice(8)   # Chip Select (GPIO8)
-DC = DigitalOutputDevice(24)  # Data/Command (GPIO24)
-RST = DigitalOutputDevice(25) # Reset (GPIO25)
+CS = DigitalOutputDevice(22)  
+DC = DigitalOutputDevice(17)  
+RST = DigitalOutputDevice(27) 
 
 # مقداردهی اولیه SPI
 spi = spidev.SpiDev(0, 0)
@@ -18,6 +19,9 @@ ILI9341_DISPON  = 0x29
 ILI9341_CASET   = 0x2A
 ILI9341_PASET   = 0x2B
 ILI9341_RAMWR   = 0x2C
+
+WIDTH = 240
+HEIGHT = 320
 
 def send_command(cmd):
     DC.off()  
@@ -43,28 +47,42 @@ def init_display():
     time.sleep(0.1)
     send_command(ILI9341_DISPON)
 
-def clear_screen():
-    try:
-        send_command(ILI9341_CASET)
-        send_data([0x00, 0x00, 0x00, 0xEF])  # تنظیم محدوده X (0 تا 239)
+def set_address_window(x0, y0, x1, y1):
+    send_command(ILI9341_CASET)
+    send_data([0x00, x0, 0x00, x1])  # محدوده X
 
-        send_command(ILI9341_PASET)
-        send_data([0x00, 0x00, 0x01, 0x3F])  # تنظیم محدوده Y (0 تا 319)
+    send_command(ILI9341_PASET)
+    send_data([0x00, y0, 0x00, y1])  # محدوده Y
 
-        send_command(ILI9341_RAMWR)
-        
-        # ایجاد داده‌های رنگ مشکی
-        black_color = [0x00, 0x00] * (240 * 320)  # 153600 بایت برای 240x320 پیکسل
-        
-        # تقسیم داده‌ها به تکه‌های 2048 بایت (کمتر از 4096 بایت)
-        chunk_size = 2048  # اندازه هر تکه (حداکثر 4096 بایت، ولی برای ایمنی کمتر انتخاب شده)
-        for i in range(0, len(black_color), chunk_size):
-            chunk = black_color[i:i + chunk_size]
-            send_data(chunk)
-    except Exception as e:
-        print(f"خطا در clear_screen: {e}")
+    send_command(ILI9341_RAMWR)  # شروع نوشتن در RAM
+
+def convert_image_to_rgb565(image_path):
+    img = Image.open(image_path)
+    img = img.resize((WIDTH, HEIGHT))  # تغییر اندازه تصویر
+    img = img.convert('RGB')  # تبدیل به RGB
+
+    pixel_data = []
+    for y in range(HEIGHT):
+        for x in range(WIDTH):
+            r, g, b = img.getpixel((x, y))
+
+            # تبدیل به RGB565
+            rgb565 = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3)
+            pixel_data.append(rgb565 >> 8)  # بخش بالا
+            pixel_data.append(rgb565 & 0xFF)  # بخش پایین
+    
+    return pixel_data
+
+def display_image(image_path):
+    set_address_window(0, 0, WIDTH - 1, HEIGHT - 1)
+    image_data = convert_image_to_rgb565(image_path)
+    send_data(image_data)
 
 # اجرای برنامه
 init_display()
-clear_screen()
-print("صفحه نمایش سیاه شد!")
+display_image("test.jpg")  # نمایش تصویر موردنظر
+
+print("تصویر نمایش داده شد!")
+
+while True:
+    time.sleep(1)
