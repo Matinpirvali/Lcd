@@ -44,16 +44,25 @@ def init_display():
     send_command(ILI9341_DISPON)
 
 def clear_screen():
-    send_command(ILI9341_CASET)
-    send_data([0x00, 0x00, 0x00, 0xEF]) # تنظیم محدوده X
+    try:
+        send_command(ILI9341_CASET)
+        send_data([0x00, 0x00, 0x00, 0xEF])  # تنظیم محدوده X (0 تا 239)
 
-    send_command(ILI9341_PASET)
-    send_data([0x00, 0x00, 0x01, 0x3F]) # تنظیم محدوده Y
+        send_command(ILI9341_PASET)
+        send_data([0x00, 0x00, 0x01, 0x3F])  # تنظیم محدوده Y (0 تا 319)
 
-    send_command(ILI9341_RAMWR)
-    
-    black_color = [0x00, 0x00] * (240 * 320)  # مقداردهی به رنگ مشکی
-    send_data(black_color)
+        send_command(ILI9341_RAMWR)
+        
+        # ایجاد داده‌های رنگ مشکی
+        black_color = [0x00, 0x00] * (240 * 320)  # 153600 بایت برای 240x320 پیکسل
+        
+        # تقسیم داده‌ها به تکه‌های 2048 بایت (کمتر از 4096 بایت)
+        chunk_size = 2048  # اندازه هر تکه (حداکثر 4096 بایت، ولی برای ایمنی کمتر انتخاب شده)
+        for i in range(0, len(black_color), chunk_size):
+            chunk = black_color[i:i + chunk_size]
+            send_data(chunk)
+    except Exception as e:
+        print(f"خطا در clear_screen: {e}")
 
 # اجرای برنامه
 init_display()
