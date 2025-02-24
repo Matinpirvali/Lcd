@@ -80,7 +80,7 @@ def display_image(image_path):
 
 # اجرای برنامه
 init_display()
-display_image("test.jpg")  # نمایش تصویر موردنظر
+display_image("IMG_20250224_113036.jpg")  # نمایش تصویر موردنظر
 
 print("تصویر نمایش داده شد!")
 
