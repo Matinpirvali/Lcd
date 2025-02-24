@@ -76,8 +76,16 @@ def convert_image_to_rgb565(image_path):
 def display_image(image_path):
     set_address_window(0, 0, WIDTH - 1, HEIGHT - 1)
     image_data = convert_image_to_rgb565(image_path)
-    send_data(image_data)
-
+    send_data_chunked(image_data)
+def send_data_chunked(data, chunk_size=4096):
+    DC.on()
+    CS.off()
+    
+    for i in range(0, len(data), chunk_size):
+        spi.writebytes(data[i:i+chunk_size])  # ارسال بسته‌های 4096 بایتی
+    
+    CS.on()
+    
 # اجرای برنامه
 init_display()
 display_image("IMG_20250224_113036.jpg")  # نمایش تصویر موردنظر
