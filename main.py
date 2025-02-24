@@ -59,6 +59,6 @@ def display_image(image_path):
 
 # اجرای برنامه
 init_display()
-display_image("image.rgb")  # فایل تصویر را اینجا وارد کن
+display_image("sample_image.rgb")  # فایل تصویر را اینجا وارد کن
 
 print("تصویر روی نمایشگر ارسال شد!")
