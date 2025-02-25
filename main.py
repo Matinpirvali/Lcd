@@ -90,7 +90,7 @@ def display_image(image_path):
 
 # اجرای برنامه
 init_display()
-display_image("simple_image.jpg")  # جایگزین کردن نام تصویر موردنظر
+display_image("IMG_20250224_171236.jpg")  # جایگزین کردن نام تصویر موردنظر
 
 print("تصویر ساده نمایش داده شد!")
 
