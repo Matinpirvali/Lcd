@@ -3,7 +3,7 @@ import spidev
 import time
 from PIL import Image
 
-# تنظیم پایه‌ها (براساس پین‌بندی شما)
+# تنظیم پایه‌ها
 CS = DigitalOutputDevice(22)    # Chip Select
 DC = DigitalOutputDevice(17)    # Data/Command
 RST = DigitalOutputDevice(27)   # Reset
@@ -20,27 +20,30 @@ ILI9341_CASET   = 0x2A
 ILI9341_PASET   = 0x2B
 ILI9341_RAMWR   = 0x2C
 
-# ابعاد نمایشگر (براساس مدل شما ممکن است متفاوت باشد)
+# ابعاد نمایشگر (در این مثال 240x320)
 WIDTH = 240
 HEIGHT = 320
 
 def send_command(cmd):
-    DC.off()        # دستور
+    DC.off()        # حالت دستور
     CS.off()
     spi.writebytes([cmd])
     CS.on()
 
 def send_data(data):
-    DC.on()         # داده
+    DC.on()         # حالت داده
     CS.off()
     if isinstance(data, int):
         spi.writebytes([data])
     else:
-        spi.writebytes(data)
+        # تقسیم داده به بخش‌های کوچک (چانک) برای جلوگیری از ارور انتقال بیش از حد داده
+        chunk_size = 4096  # اندازه بخش قابل تغییر است
+        for i in range(0, len(data), chunk_size):
+            spi.writebytes(data[i:i+chunk_size])
     CS.on()
 
 def init_display():
-    # ریست اولیه نمایشگر
+    # ریست و مقداردهی اولیه نمایشگر
     RST.off()
     time.sleep(0.1)
     RST.on()
@@ -66,7 +69,7 @@ def set_address_window(x0, y0, x1, y1):
 
 def convert_image_to_rgb565(image_path):
     """
-    تصویر ورودی را به اندازه نمایشگر تغییر اندازه داده و به فرمت RGB565 تبدیل می‌کند.
+    تصویر ورودی را به ابعاد نمایشگر تغییر اندازه داده و به فرمت RGB565 تبدیل می‌کند.
     """
     img = Image.open(image_path)
     img = img.resize((WIDTH, HEIGHT))  # تغییر اندازه به ابعاد نمایشگر
@@ -90,10 +93,9 @@ def display_image(image_path):
 
 # اجرای برنامه
 init_display()
-display_image("IMG_20250224_171236.jpg")  # جایگزین کردن نام تصویر موردنظر
+display_image("IMG_20250224_171236.jpg")  # نام تصویر ساده را وارد کنید
 
-print("تصویر ساده نمایش داده شد!")
+print("تصویر نمایش داده شد!")
 
-# حلقه بی‌نهایت برای جلوگیری از خاتمه برنامه
 while True:
     time.sleep(1)
